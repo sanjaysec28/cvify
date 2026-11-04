@@ -5,13 +5,13 @@ import { createServerFn } from "@tanstack/react-start";
  * Accepts a base64-encoded file + mime type, returns extracted plain text.
  */
 export const ocrDocument = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => {
+  .validator((input: unknown) => {
     const v = input as { base64?: string; mimeType?: string };
     if (!v?.base64 || typeof v.base64 !== "string") throw new Error("base64 is required");
     if (!v?.mimeType || typeof v.mimeType !== "string") throw new Error("mimeType is required");
     return { base64: v.base64, mimeType: v.mimeType };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }: { data: { base64: string; mimeType: string } }) => {
     const geminiKey = process.env.GEMINI_API_KEY;
     const lovableKey = process.env.LOVABLE_API_KEY;
 
