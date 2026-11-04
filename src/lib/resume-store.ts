@@ -31,26 +31,42 @@ function stripUndefined<T>(value: T): T {
 
 /** One resume per user (id = uid). Easy to extend to multiple later. */
 export async function saveResume(userId: string, data: ResumeData) {
+  const db = getDb();
+  if (!db) {
+    console.warn("Firebase not configured — resume stored in local session only");
+    return;
+  }
   const clean = stripUndefined(data);
-  await setDoc(
-    doc(getDb(), "resumes", userId),
-    {
-      userId,
-      resumeData: clean,
-      template: clean.template ?? "modern",
-      title: clean.name?.trim() ? `${clean.name}'s Resume` : "Untitled Resume",
-      updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+  try {
+    await setDoc(
+      doc(db, "resumes", userId),
+      {
+        userId,
+        resumeData: clean,
+        template: clean.template ?? "modern",
+        title: clean.name?.trim() ? `${clean.name}'s Resume` : "Untitled Resume",
+        updatedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  } catch (err) {
+    console.warn("Failed to save resume to Firestore:", err);
+  }
 }
 
 export async function loadResume(userId: string): Promise<ResumeData | null> {
-  const snap = await getDoc(doc(getDb(), "resumes", userId));
-  if (!snap.exists()) return null;
-  const d = snap.data() as { resumeData?: ResumeData };
-  return d.resumeData ?? null;
+  const db = getDb();
+  if (!db) return null;
+  try {
+    const snap = await getDoc(doc(db, "resumes", userId));
+    if (!snap.exists()) return null;
+    const d = snap.data() as { resumeData?: ResumeData };
+    return d.resumeData ?? null;
+  } catch (err) {
+    console.warn("Failed to load resume from Firestore:", err);
+    return null;
+  }
 }
 
 export type ResumeListItem = {
@@ -70,34 +86,47 @@ function toDate(t: unknown): Date | null {
 }
 
 export async function listResumes(userId: string): Promise<ResumeListItem[]> {
-  const q = query(collection(getDb(), "resumes"), where("userId", "==", userId));
-  const snap = await getDocs(q);
-  const items: ResumeListItem[] = [];
-  snap.forEach((d) => {
-    const x = d.data() as {
-      title?: string;
-      template?: string;
-      updatedAt?: unknown;
-      createdAt?: unknown;
-      resumeData?: ResumeData;
-    };
-    if (!x.resumeData) return;
-    items.push({
-      id: d.id,
-      title: x.title ?? (x.resumeData.name ? `${x.resumeData.name}'s Resume` : "Untitled Resume"),
-      template: x.template ?? x.resumeData.template ?? "modern",
-      updatedAt: toDate(x.updatedAt),
-      createdAt: toDate(x.createdAt),
-      resumeData: x.resumeData,
+  const db = getDb();
+  if (!db) return [];
+  try {
+    const q = query(collection(db, "resumes"), where("userId", "==", userId));
+    const snap = await getDocs(q);
+    const items: ResumeListItem[] = [];
+    snap.forEach((d) => {
+      const x = d.data() as {
+        title?: string;
+        template?: string;
+        updatedAt?: unknown;
+        createdAt?: unknown;
+        resumeData?: ResumeData;
+      };
+      if (!x.resumeData) return;
+      items.push({
+        id: d.id,
+        title: x.title ?? (x.resumeData.name ? `${x.resumeData.name}'s Resume` : "Untitled Resume"),
+        template: x.template ?? x.resumeData.template ?? "modern",
+        updatedAt: toDate(x.updatedAt),
+        createdAt: toDate(x.createdAt),
+        resumeData: x.resumeData,
+      });
     });
-  });
-  // newest first
-  items.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
-  return items;
+    // newest first
+    items.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
+    return items;
+  } catch (err) {
+    console.warn("Failed to list resumes from Firestore:", err);
+    return [];
+  }
 }
 
 export async function deleteResumeById(resumeId: string) {
-  await deleteDoc(doc(getDb(), "resumes", resumeId));
+  const db = getDb();
+  if (!db) return;
+  try {
+    await deleteDoc(doc(db, "resumes", resumeId));
+  } catch (err) {
+    console.warn("Failed to delete resume from Firestore:", err);
+  }
 }
 
 /**
@@ -151,15 +180,20 @@ export async function submitFeedback(input: {
   email: string;
   message: string;
 }) {
-  const id = `${input.userId}_${Date.now()}`;
-  // 1) Save to Firestore (audit trail)
-  await setDoc(doc(getDb(), "feedback", id), {
-    userId: input.userId,
-    name: input.name,
-    email: input.email,
-    message: input.message,
-    createdAt: serverTimestamp(),
-  });
-  // 2) Email admin (best-effort, won't block UI on failure)
+  const db = getDb();
+  if (db) {
+    try {
+      const id = `${input.userId}_${Date.now()}`;
+      await setDoc(doc(db, "feedback", id), {
+        userId: input.userId,
+        name: input.name,
+        email: input.email,
+        message: input.message,
+        createdAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn("Failed to save feedback to firestore:", e);
+    }
+  }
   await emailFeedbackToAdmin(input);
 }

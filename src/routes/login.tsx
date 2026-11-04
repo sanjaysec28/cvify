@@ -18,7 +18,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth();
+  const { user, loading, isConfigured, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -77,6 +77,16 @@ function LoginPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           Sign in to save your resumes to the cloud and access them anywhere.
         </p>
+
+        {!isConfigured && (
+          <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-200">
+            <p className="font-semibold text-amber-300">Firebase configuration pending</p>
+            <p className="mt-1 text-muted-foreground">
+              Configure VITE_FIREBASE_API_KEY and other Firebase variables in Vercel to activate
+              cloud accounts.
+            </p>
+          </div>
+        )}
 
         <button
           onClick={handleGoogle}
