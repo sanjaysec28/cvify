@@ -1,0 +1,6 @@
+{
+  "name": "CVify.AI",
+  "description": "Smart AI-powered ATS resume builder, analyzer, and template customizer.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
