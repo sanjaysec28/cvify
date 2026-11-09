@@ -48,13 +48,8 @@ function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-2xl"
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-neon text-neon-foreground">
-            <Sparkles className="h-5 w-5" strokeWidth={2.5} />
-          </div>
-          <span className="font-display text-xl font-bold">
-            CVify<span className="text-neon">.AI</span>
-          </span>
+        <div className="flex items-center">
+          <img src="/logo.png" alt="CVify.AI" className="h-8 sm:h-9 w-auto object-contain" />
         </div>
 
         <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-background/60 py-1 pl-1 pr-3 shadow-sm">

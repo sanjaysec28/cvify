@@ -30,16 +30,12 @@ export function Navbar() {
     <header className="sticky top-0 z-50">
       <div className="glass border-b border-border/50">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2 group">
-            <motion.div
-              whileHover={{ rotate: 12 }}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-neon text-neon-foreground"
-            >
-              <Sparkles className="h-5 w-5" strokeWidth={2.5} />
-            </motion.div>
-            <span className="font-display text-lg font-bold tracking-tight">
-              CVify<span className="text-neon dark:text-neon">.AI</span>
-            </span>
+          <Link to="/" className="flex items-center group">
+            <img
+              src="/logo.png"
+              alt="CVify.AI"
+              className="h-8 sm:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
 
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
